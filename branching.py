@@ -3,12 +3,10 @@ import airflow.utils.dates
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.utils.trigger_rule import TriggerRule
-
 
 dag = DAG(
-    dag_id="trigger_rules",
-    description="DAG de exemplo para exemplificar as trigger rules",
+    dag_id="branching-teste",
+    description="DAG de exemplo para o conceito de Branching",
     start_date=airflow.utils.dates.days_ago(14),
     schedule_interval=None,
 )
@@ -22,7 +20,7 @@ def check_acuracy(ti):
 
 get_acuracy_op = BashOperator(
     task_id='get_acuracy_task',
-    bash_command='echo "{{ ti.xcom_push(key="model_acuracy", value=90) }}"',
+    bash_command='echo "{{ ti.xcom_push(key="model_acuracy", value=75) }}"',
     dag=dag,
 )
 
@@ -34,6 +32,5 @@ check_acuracy_op = BranchPythonOperator(
 
 deploy_op = DummyOperator(task_id='deploy_task', dag=dag)
 retrain_op = DummyOperator(task_id='retrain_task', dag=dag)
-notify_op = DummyOperator(task_id='notify_task', trigger_rule=TriggerRule.NONE_FAILED, dag=dag)
 
-get_acuracy_op >> check_acuracy_op >> [deploy_op, retrain_op] >> notify_op
+get_acuracy_op >> check_acuracy_op >> [deploy_op, retrain_op]

@@ -4,11 +4,12 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.trigger_rule import TriggerRule
+from airflow.utils.edgemodifier import Label
 
 
 dag = DAG(
-    dag_id="trigger_rules",
-    description="DAG de exemplo para exemplificar as trigger rules",
+    dag_id="edge_labels",
+    description="DAG de exemplo para exemplificar a funcionalidade de definir labels para as arestas",
     start_date=airflow.utils.dates.days_ago(14),
     schedule_interval=None,
 )
@@ -36,4 +37,6 @@ deploy_op = DummyOperator(task_id='deploy_task', dag=dag)
 retrain_op = DummyOperator(task_id='retrain_task', dag=dag)
 notify_op = DummyOperator(task_id='notify_task', trigger_rule=TriggerRule.NONE_FAILED, dag=dag)
 
-get_acuracy_op >> check_acuracy_op >> [deploy_op, retrain_op] >> notify_op
+get_acuracy_op >> check_acuracy_op
+check_acuracy_op >> Label("ACC >= 90%") >> deploy_op >> notify_op
+check_acuracy_op >> Label("ACC < 90%") >> retrain_op >> notify_op
